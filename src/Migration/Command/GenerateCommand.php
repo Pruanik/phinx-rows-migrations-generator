@@ -27,7 +27,7 @@ class GenerateCommand extends AbstractCommand
         $this->addOption('environment', 'e', InputOption::VALUE_REQUIRED, 'The target environment.');
 
         $this->setName('generate');
-        $this->setDescription('Generate a new migration');
+        $this->setDescription('Generate a new migration of rows data');
 
         // Allow the migration path to be chosen non-interactively.
         $this->addOption(
@@ -44,7 +44,7 @@ class GenerateCommand extends AbstractCommand
             'Specify the name of the migration for this migration'
         );
 
-        $this->addOption('overwrite', null, InputOption::VALUE_NONE, 'Overwrite schema.php file');
+        $this->addOption('overwrite', null, InputOption::VALUE_NONE, 'Overwrite schema_rows.php file');
     }
 
     /**
@@ -119,8 +119,8 @@ class GenerateCommand extends AbstractCommand
 
         $output->writeln('<info>using migration path</info> ' . $migrationsPath);
 
-        $schemaFile = $migrationsPath . DIRECTORY_SEPARATOR . 'schema.php';
-        $output->writeln('<info>using schema file</info> ' . $schemaFile);
+        $schemaFile = $migrationsPath . DIRECTORY_SEPARATOR . 'schema_rows.php';
+        $output->writeln('<info>using schema file of data</info> ' . $schemaFile);
 
         // Gets the database adapter.
         $dbAdapter = $manager->getEnvironment($environment)->getAdapter();
@@ -128,6 +128,8 @@ class GenerateCommand extends AbstractCommand
         $pdo = $this->getPdo($manager, $environment);
 
         $foreignKeys = $config->offsetExists('foreign_keys') ? $config->offsetGet('foreign_keys') : false;
+
+        $watchingTables = $config->offsetExists('tables_watch') ? $config->offsetGet('watching_tables') : [];
 
         $defaultMigrationTable = $envOptions['default_migration_table'] ?? 'phinxlog';
 
@@ -141,6 +143,7 @@ class GenerateCommand extends AbstractCommand
             'adapter' => $dbAdapter,
             'schema_file' => $schemaFile,
             'migration_path' => $migrationsPaths[0],
+            'watching_tables' => $watchingTables,
             'foreign_keys' => $foreignKeys,
             'config_file' => $configFilePath,
             'name' => $name,

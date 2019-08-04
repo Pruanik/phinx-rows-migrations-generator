@@ -25,6 +25,7 @@ return [
     //'table_prefix' => 'dev_',
     //'table_suffix' => '_v1',
     'foreign_keys' => true,
+    'watching_tables' => ['users', 'comments'],
     'environments' => [
         //'default_migration_table' => 'my_migration_table',
         'default_database' => 'local',

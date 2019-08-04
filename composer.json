@@ -12,7 +12,7 @@
         "rows",
         "data"
     ],
-    "homepage": "https://github.com/Pruanik/phinx-migrations-generator",
+    "homepage": "https://github.com/Pruanik/phinx-rows-migrations-generator",
     "license": "MIT",
     "require": {
         "php": "^7.2",

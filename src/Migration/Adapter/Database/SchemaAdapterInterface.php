@@ -8,11 +8,11 @@ namespace Pruanik\Migration\Adapter\Database;
 interface SchemaAdapterInterface
 {
     /**
-     * Load current database schema.
+     * Load current rows from watching tables.
      *
      * @return array
      */
-    public function getSchema(): array;
+    public function getRows(): array;
 
     /**
      * Quote value.
