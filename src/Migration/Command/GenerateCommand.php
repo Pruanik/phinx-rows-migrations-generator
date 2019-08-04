@@ -1,10 +1,10 @@
 <?php
 
-namespace Odan\Migration\Command;
+namespace Pruanik\Migration\Command;
 
 use Exception;
-use Odan\Migration\Adapter\Database\MySqlSchemaAdapter;
-use Odan\Migration\Generator\MigrationGenerator;
+use Pruanik\Migration\Adapter\Database\MySqlSchemaAdapter;
+use Pruanik\Migration\Generator\MigrationGenerator;
 use PDO;
 use Phinx\Console\Command\AbstractCommand;
 use Phinx\Db\Adapter\AdapterWrapper;

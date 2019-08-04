@@ -1,5 +1,0 @@
-parameters:
-	excludes_analyse:
-		- tests/test.php
-		- tests/phinx.php
-		- tests/diffs

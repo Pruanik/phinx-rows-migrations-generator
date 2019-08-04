@@ -1,12 +1,12 @@
 <?php
 
-namespace Odan\Migration\Generator;
+namespace Pruanik\Migration\Generator;
 
 use Exception;
 use InvalidArgumentException;
-use Odan\Migration\Adapter\Database\SchemaAdapterInterface;
-use Odan\Migration\Adapter\Generator\PhinxMySqlGenerator;
-use Odan\Migration\Utility\ArrayUtil;
+use Pruanik\Migration\Adapter\Database\SchemaAdapterInterface;
+use Pruanik\Migration\Adapter\Generator\PhinxMySqlGenerator;
+use Pruanik\Migration\Utility\ArrayUtil;
 use PDO;
 use Phinx\Db\Adapter\AdapterInterface;
 use Phinx\Util\Util;
@@ -78,7 +78,7 @@ class MigrationGenerator
     /**
      * Constructor.
      *
-     * @param array $settings
+     * @param array $settings Array with settings
      * @param InputInterface $input
      * @param OutputInterface $output
      * @param SchemaAdapterInterface $dba

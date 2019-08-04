@@ -1,16 +1,18 @@
 {
-    "name": "odan/phinx-migrations-generator",
+    "name": "pruanik/phinx-rows-migrations-generator",
     "type": "library",
-    "description": "Migration generator for Phinx",
+    "description": "Migration generator of data rows for Phinx",
     "keywords": [
         "migration",
         "migrations",
         "generator",
         "phinx",
         "database",
-        "mysql"
+        "mysql",
+        "rows",
+        "data"
     ],
-    "homepage": "https://github.com/odan/phinx-migrations-generator",
+    "homepage": "https://github.com/Pruanik/phinx-migrations-generator",
     "license": "MIT",
     "require": {
         "php": "^7.2",
@@ -37,12 +39,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Odan\\Migration\\": "src/Migration/"
+            "Pruanik\\Migration\\": "src/Migration/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Odan\\Migration\\Test\\": "tests/"
+            "Pruanik\\Migration\\Test\\": "tests/"
         }
     },
     "bin": [

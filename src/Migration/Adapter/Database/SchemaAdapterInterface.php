@@ -1,6 +1,6 @@
 <?php
 
-namespace Odan\Migration\Adapter\Database;
+namespace Pruanik\Migration\Adapter\Database;
 
 /**
  * Interface for all Database adapters.

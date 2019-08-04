@@ -1,6 +1,6 @@
 <?php
 
-namespace Odan\Migration\Adapter\Generator;
+namespace Pruanik\Migration\Adapter\Generator;
 
 /**
  * Class RawPhpValue.

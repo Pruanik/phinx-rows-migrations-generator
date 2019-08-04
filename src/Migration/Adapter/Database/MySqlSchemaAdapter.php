@@ -1,8 +1,8 @@
 <?php
 
-namespace Odan\Migration\Adapter\Database;
+namespace Pruanik\Migration\Adapter\Database;
 
-use Odan\Migration\Utility\ArrayUtil;
+use Pruanik\Migration\Utility\ArrayUtil;
 use PDO;
 use PDOStatement;
 use RuntimeException;

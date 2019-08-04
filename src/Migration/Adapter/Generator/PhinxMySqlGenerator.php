@@ -1,9 +1,9 @@
 <?php
 
-namespace Odan\Migration\Adapter\Generator;
+namespace Pruanik\Migration\Adapter\Generator;
 
-use Odan\Migration\Adapter\Database\SchemaAdapterInterface;
-use Odan\Migration\Utility\ArrayUtil;
+use Pruanik\Migration\Adapter\Database\SchemaAdapterInterface;
+use Pruanik\Migration\Utility\ArrayUtil;
 use Phinx\Db\Adapter\AdapterInterface;
 use Riimu\Kit\PHPEncoder\PHPEncoder;
 use Symfony\Component\Console\Output\OutputInterface;

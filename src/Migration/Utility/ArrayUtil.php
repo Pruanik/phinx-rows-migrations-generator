@@ -1,6 +1,6 @@
 <?php
 
-namespace Odan\Migration\Utility;
+namespace Pruanik\Migration\Utility;
 
 /**
  * Class ArrayUtil.
