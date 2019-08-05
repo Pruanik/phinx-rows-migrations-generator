@@ -12,7 +12,7 @@ interface SchemaAdapterInterface
      *
      * @return array
      */
-    public function getRows(): array;
+    public function getRows(array $tables): array;
 
     /**
      * Quote value.

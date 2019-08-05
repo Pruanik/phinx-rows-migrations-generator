@@ -129,7 +129,7 @@ class GenerateCommand extends AbstractCommand
 
         $foreignKeys = $config->offsetExists('foreign_keys') ? $config->offsetGet('foreign_keys') : false;
 
-        $watchingTables = $config->offsetExists('tables_watch') ? $config->offsetGet('watching_tables') : [];
+        $watchingTables = $config->offsetExists('watching_tables') ? $config->offsetGet('watching_tables') : [];
 
         $defaultMigrationTable = $envOptions['default_migration_table'] ?? 'phinxlog';
 

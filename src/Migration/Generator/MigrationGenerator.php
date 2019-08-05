@@ -129,12 +129,12 @@ class MigrationGenerator
      */
     public function generate(): int
     {
-        $schema = $this->dba->getSchema();
+        $schema = $this->dba->getRows($this->settings['watching_tables']);
         $oldSchema = $this->getOldSchema($this->settings);
         $diffs = $this->compareSchema($schema, $oldSchema);
 
         if (empty($diffs[0]) && empty($diffs[1])) {
-            $this->output->writeln('No database changes detected.');
+            $this->output->writeln('No new rows detected.');
 
             return 1;
         }
@@ -255,7 +255,7 @@ class MigrationGenerator
     protected function getSchemaFilename(array $settings): string
     {
         // Default
-        $schemaFile = sprintf('%s/%s', getcwd(), 'schema.php');
+        $schemaFile = sprintf('%s/%s', getcwd(), 'schema_insert.php');
         if (!empty($settings['schema_file'])) {
             $schemaFile = $settings['schema_file'];
         }
@@ -285,7 +285,7 @@ class MigrationGenerator
      */
     protected function compareSchema(array $newSchema, array $oldSchema): array
     {
-        $this->output->writeln('Comparing schema file to the database.');
+        $this->output->writeln('Comparing rows in tables.');
 
         $arrayUtil = new ArrayUtil();
 

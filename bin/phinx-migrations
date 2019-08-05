@@ -13,7 +13,7 @@ if (!(class_exists('Composer\\Autoload\\ClassLoader', false))) {
     }
 }
 
-use Odan\Migration\Command\GenerateCommand;
+use Pruanik\Migration\Command\GenerateCommand;
 
 $application = new \Phinx\Console\PhinxApplication();
 $application->add(new GenerateCommand());
