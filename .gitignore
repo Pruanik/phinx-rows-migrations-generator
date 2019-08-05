@@ -16,6 +16,7 @@ bin/schema.php
 bin/schema.json
 
 tests/*_test1.php
+tests/migrations/
 tests/phinx.php
 tests/schema.php
 tests/schema_insert.php

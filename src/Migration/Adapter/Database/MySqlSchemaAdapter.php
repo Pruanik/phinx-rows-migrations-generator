@@ -127,12 +127,12 @@ class MySqlSchemaAdapter implements SchemaAdapterInterface
             if(in_array($tableName, $this->tables)){
                 $this->output->writeln(sprintf('Table: <info>%s</info>', $tableName));
 
-                $result['id'][$tableName] = $this->getPrimaryKey($tableName);
+                $result['id'][$tableName] = $this->getPrimaryColumn($tableName);
                 $result['columns'][$tableName] = $this->getColumns($tableName);
 
                 $sql = 'SELECT * FROM %s;';
                 $sql = sprintf($sql, $tableName);
-                $rows = $this->queryFetchAll($sql, [PDO::FETCH_UNIQUE, PDO::FETCH_ASSOC]);
+                $rows = $this->queryFetchAll($sql, PDO::FETCH_UNIQUE | PDO::FETCH_ASSOC);
                 $result['tables'][$tableName] = $rows;
             } else {
                 $this->output->writeln(sprintf('Table not exist: <error>%s</error>', $tableName));
@@ -186,19 +186,11 @@ class MySqlSchemaAdapter implements SchemaAdapterInterface
      */
     protected function getColumns($tableName): array
     {
-        $sql = sprintf('SELECT * FROM information_schema.columns
+        $sql = sprintf('SELECT column_name FROM information_schema.columns
                     WHERE table_schema=database()
                     AND table_name = %s', $this->quote($tableName));
 
-        $rows = $this->queryFetchAll($sql);
-
-        $result = [];
-        foreach ($rows as $row) {
-            $name = $row['COLUMN_NAME'];
-            $result[$name] = $row;
-        }
-
-        return $result;
+        return $this->queryFetchAll($sql, PDO::FETCH_COLUMN);
     }
 
     /**
@@ -206,23 +198,15 @@ class MySqlSchemaAdapter implements SchemaAdapterInterface
      *
      * @param string $tableName
      *
-     * @return array
+     * @return string
      */
-    protected function getPrimaryColumn($tableName): array
+    protected function getPrimaryColumn($tableName): string
     {
         $sql = sprintf('SELECT column_name FROM information_schema.columns
                     WHERE table_schema=database() AND column_key = "PRI"
                     AND table_name = %s', $this->quote($tableName));
 
-        $rows = $this->queryFetchAll($sql);
-
-        $result = [];
-        foreach ($rows as $row) {
-            $name = $row['COLUMN_NAME'];
-            $result[$name] = $row;
-        }
-
-        return $result;
+        return $this->queryFetchAll($sql)[0]['column_name'];
     }
 
     /**
