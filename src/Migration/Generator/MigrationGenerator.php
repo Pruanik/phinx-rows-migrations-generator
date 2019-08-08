@@ -177,8 +177,7 @@ class MigrationGenerator
             ));
         }
 
-        $migration = $this->generator->createMigration($className, $schema, $oldSchema);
-        $this->saveMigrationFile($filePath, $migration);
+        $this->generator->createMigration($filePath, $className, $schema, $oldSchema);
 
         // Mark migration as as completed
         if (!empty($this->settings['mark_migration'])) {
@@ -310,18 +309,6 @@ class MigrationGenerator
         $result = str_replace('_', ' ', $name);
 
         return str_replace(' ', '', ucwords($result));
-    }
-
-    /**
-     * Save migration file.
-     *
-     * @param string $filePath Name of migration file
-     * @param string $migration Migration code
-     */
-    protected function saveMigrationFile(string $filePath, string $migration): void
-    {
-        $this->output->writeln(sprintf('Generate migration file: %s', $filePath));
-        file_put_contents($filePath, $migration);
     }
 
     /**

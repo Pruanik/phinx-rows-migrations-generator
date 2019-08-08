@@ -55,6 +55,30 @@ class PhinxMySqlGenerator
     protected $ind3 = '            ';
 
     /**
+     * @var string
+     */
+    protected $ind4 = '                ';
+
+    /**
+     * @var string
+     */
+    protected $ind5 = '                    ';
+
+    /**
+     * List field name id.
+     *
+     * @var array
+     */
+    protected $idList;
+
+    /**
+     * List columns of table.
+     *
+     * @var string
+     */
+    protected $columnsList;
+
+    /**
      * Constructor.
      *
      * @param SchemaAdapterInterface $dba
@@ -79,13 +103,58 @@ class PhinxMySqlGenerator
     /**
      * Create migration.
      *
-     * @param string $name Name of the migration
+     * @param string $filePath Path of the migration
+     * @param string $className Name of the migration
      * @param array $newSchema
      * @param array $oldSchema
      *
      * @return string PHP code
      */
-    public function createMigration($name, $newSchema, $oldSchema): string
+    public function createMigration($filePath, $className, $newSchema, $oldSchema): string
+    {
+        $arrayUtil = new ArrayUtil();
+
+        $this->idList = $newSchema['id'];
+        $this->columnsList = $newSchema['columns'];
+
+        foreach ($newSchema['tables'] ?? [] as $tableName => $table) {
+
+            if ($tableName === $this->options['default_migration_table']) {
+                continue;
+            }
+
+            $tableDiffs = $arrayUtil->diff($newSchema['tables'][$tableName] ?? [], $oldSchema['tables'][$tableName] ?? []);
+            $tableDiffsRemove = $arrayUtil->diff($oldSchema['tables'][$tableName] ?? [], $newSchema['tables'][$tableName] ?? []);
+    
+            if ($tableDiffs) {
+                $action = 'insert';
+                foreach($tableDiffs as $rowID => $columns){
+                    $name = $this->makeName($className, $action, $tableName, $rowID);
+                    $path = $this->makePath($filePath, $action, $tableName, $rowID);
+                    $output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
+                    $this->saveMigrationFile($path, $output);
+                }
+            }
+    
+            if ($tableDiffsRemove) {
+                //$output = $this->getDeleteInstructions($output, $tableName, $new['id'], $tableDiffsRemove);
+                var_dump($tableDiffsRemove);
+            }
+        }
+
+        return 1;
+    }
+
+    /**
+     * Generate code for change function.
+     *
+     * @param string[] $output Output
+     * @param array $new New schema
+     * @param array $old Old schema
+     *
+     * @return string[] Output
+     */
+    protected function makeClass($action, $className, $tableName, $rowID, $columns): string
     {
         $output = [];
         $output[] = '<?php';
@@ -93,11 +162,12 @@ class PhinxMySqlGenerator
         $output[] = 'use Phinx\Migration\AbstractMigration;';
         $output[] = 'use Phinx\Db\Adapter\MysqlAdapter;';
         $output[] = '';
-        $output[] = sprintf('class %s extends AbstractMigration', $name);
+        $output[] = sprintf('class %s extends AbstractMigration', $className);
         $output[] = '{';
-        $output = $this->addChangeMethod($output, $newSchema, $oldSchema);
+        $output = $this->makeMethod($output, $action, $tableName, $rowID, $columns);
         $output[] = '}';
         $output[] = '';
+
         $result = implode($this->nl, $output);
 
         return $result;
@@ -112,14 +182,22 @@ class PhinxMySqlGenerator
      *
      * @return string[] Output
      */
-    protected function addChangeMethod($output, $new, $old): array
+    protected function makeMethod($output, $action, $tableName, $rowID, $columns): array
     {
         $output[] = $this->ind . 'public function change()';
         $output[] = $this->ind . '{';
-
+    
         $output[] = $this->getQueryBuilder();
-        $output = $this->getInstructions($output, $new, $old);
+        switch ($action) {
+            case 'insert':
+                $output = $this->getInsertInstruction($output, $tableName, $rowID, $columns);
+                break;
 
+            case 'delete':
+                //$output = $this->getDeleteInstruction($output, $new, $old);
+                break;
+        }
+        
         $output[] = $this->ind . '}';
 
         return $output;
@@ -136,40 +214,6 @@ class PhinxMySqlGenerator
     }
 
     /**
-     * Get table migration (new tables).
-     *
-     * @param array $output
-     * @param array $new
-     * @param array $old
-     *
-     * @return array
-     */
-    protected function getInstructions(array $output, array $new, array $old): array
-    {
-        $arrayUtil = new ArrayUtil();
-
-        foreach ($new['tables'] ?? [] as $tableName => $table) {
-
-            if ($tableName === $this->options['default_migration_table']) {
-                continue;
-            }
-
-            $tableDiffs = $arrayUtil->diff($new['tables'][$tableName] ?? [], $old['tables'][$tableName] ?? []);
-            $tableDiffsRemove = $arrayUtil->diff($old['tables'][$tableName] ?? [], $new['tables'][$tableName] ?? []);
-
-            if ($tableDiffs) {
-                $output = $this->getInsertInstructions($output, $tableName, $new['id'], $new['columns'], $tableDiffs);
-            }
-
-            if ($tableDiffsRemove) {
-                $output = $this->getDeleteInstructions($output, $tableName, $new['id'], $tableDiffsRemove);
-            }
-        }
-
-        return $output;
-    }
-
-    /**
      * Get table migration (insert data).
      *
      * @param array $output
@@ -180,24 +224,27 @@ class PhinxMySqlGenerator
      *
      * @return array
      */
-    protected function getInsertInstructions(array $output, string $tableName, array $id_new, array $columns_new, array $diff): array
+    protected function getInsertInstruction(array $output, string $tableName, int $rowID, array $columns): array
     {
-        if (empty($diff)||empty($tableName)) {
+        if (empty($columns)||empty($tableName)) {
             return $output;
         }
 
-        $fields = $this->getTableFields($columns_new, $tableName);
-        $field_id = $this->getFieldId($id_new, $tableName);
+        $fields = implode(', ', array_map(function($v){ return '"'.$v.'"'; }, $this->columnsList[$tableName]));
+        $field_id = $this->idList[$tableName];
+
+        $columns = array_merge([$field_id => $rowID], $columns);
+        $values = var_export($columns, true);
+        $values = str_replace("  ", $this->ind5, var_export($columns, true));
+        $values = $this->ind4.$values;
+        $values = str_replace(")", $this->ind4.')', $values);
 
         $output[] = sprintf('%s$builder', $this->ind2);
-        $output[] = sprintf('%s->insert(['.$fields.'])', $this->ind3);
-        $output[] = sprintf('%s->into("'.$tableName.'")', $this->ind3);
-
-        foreach($diff as $id => $rows){
-            $rows = array_merge([$field_id => $id], $rows);
-            $output[] = sprintf('%s->values(%s)', $this->ind3, str_replace("\n", "", var_export($rows, true)));
-        }
-        
+        $output[] = sprintf('%s->insert([%s])', $this->ind3, $fields);
+        $output[] = sprintf('%s->into("%s")', $this->ind3, $tableName);
+        $output[] = sprintf('%s->values(', $this->ind3);
+        $output[] = $values;
+        $output[] = sprintf('%s)', $this->ind3);
         $output[] = sprintf('%s->execute();', $this->ind3);
 
         return $output;
@@ -231,30 +278,33 @@ class PhinxMySqlGenerator
     }
 
     /**
-     * Get columns of table.
+     * Save migration file.
      *
-     * @param array $columns
-     * @param string $tableName
-     *
-     * @return string
+     * @param string $filePath Name of migration file
+     * @param string $migration Migration code
      */
-    protected function getTableFields($columns, $tableName){
-        $columns = $columns[$tableName];
-        $columns = array_map(function($v){ return '"'.$v.'"'; }, $columns);
-        $columns = implode(', ', $columns);
-
-        return $columns;
+    protected function saveMigrationFile(string $filePath, string $migration): void
+    {
+        $this->output->writeln(sprintf('Generate migration file: %s', $filePath));
+        file_put_contents($filePath, $migration);
     }
 
-    /**
-     * Get PRIMARY KEY of table.
-     *
-     * @param array $ids
-     * @param string $tableName
-     *
-     * @return string
-     */
-    protected function getFieldId($ids, $tableName){
-        return $ids[$tableName];
+    protected function makeName($className, $action, $tableName, $rowID){
+        $name = '';
+        $name .= $className;
+        $name .= ucfirst($action);
+        $name .= ucfirst($tableName);
+        $name .= $rowID;
+        return $name;
+    }
+
+    protected function makePath($filePath, $action, $tableName, $rowID){
+        $path = '';
+        $path .= mb_substr($filePath , 0, -4);
+        $path .= '_'.lcfirst($action);
+        $path .= '_'.lcfirst($tableName);
+        $path .= '_'.$rowID;
+        $path .= '.php';
+        return $path;
     }
 }
