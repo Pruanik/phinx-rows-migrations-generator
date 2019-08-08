@@ -125,6 +125,8 @@ class PhinxMySqlGenerator
 
             $tableDiffs = $arrayUtil->diff($newSchema['tables'][$tableName] ?? [], $oldSchema['tables'][$tableName] ?? []);
             $tableDiffsRemove = $arrayUtil->diff($oldSchema['tables'][$tableName] ?? [], $newSchema['tables'][$tableName] ?? []);
+
+            //!Need change timestamp
     
             if ($tableDiffs) {
                 $action = 'insert';
@@ -135,10 +137,21 @@ class PhinxMySqlGenerator
                     $this->saveMigrationFile($path, $output);
                 }
             }
-    
+
             if ($tableDiffsRemove) {
-                //$output = $this->getDeleteInstructions($output, $tableName, $new['id'], $tableDiffsRemove);
-                var_dump($tableDiffsRemove);
+                foreach($tableDiffs as $rowID => $columns){
+                    var_dump($columns);
+                    if(count($columns)==count($this->columnsList[$tableName])){//check is it update or delete
+                        $action = 'delete';
+                    } else {
+                        $action = 'update';
+                    }
+                    $name = $this->makeName($className, $action, $tableName, $rowID);
+                    $path = $this->makePath($filePath, $action, $tableName, $rowID);
+                    $output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
+                    $this->saveMigrationFile($path, $output);
+                }
+                exit;          
             }
         }
 
