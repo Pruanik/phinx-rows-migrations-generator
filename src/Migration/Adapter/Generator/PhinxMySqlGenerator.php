@@ -125,6 +125,26 @@ class PhinxMySqlGenerator
 
             $tableDiffs = $arrayUtil->diff($newSchema['tables'][$tableName] ?? [], $oldSchema['tables'][$tableName] ?? []);
             $tableDiffsRemove = $arrayUtil->diff($oldSchema['tables'][$tableName] ?? [], $newSchema['tables'][$tableName] ?? []);
+            $tableDiffsUpdate = [];
+
+            if(!empty($tableDiffs)&&!empty($tableDiffsRemove)){
+                $same_rows = array_uintersect(array_keys($tableDiffs), array_keys($tableDiffsRemove), "strcasecmp");
+                if(!empty($same_rows)){
+                    foreach($tableDiffs as $id => $diff){
+                        if(in_array($id, $same_rows)){
+                            $tableDiffsUpdate[$id]['future'] = $diff;
+                        }
+                    }
+                    $tableDiffs = array_diff_key($tableDiffs, array_flip($same_rows));
+
+                    foreach($tableDiffsRemove as $id => $diff){
+                        if(in_array($id, $same_rows)){
+                            $tableDiffsUpdate[$id]['past'] = $diff;
+                        }
+                    }
+                    $tableDiffsRemove = array_diff_key($tableDiffsRemove, array_flip($same_rows));
+                }
+            }
 
             $iterator = 1;
     
@@ -149,7 +169,28 @@ class PhinxMySqlGenerator
             }
 
             // if ($tableDiffsRemove) {
-            //     foreach($tableDiffs as $rowID => $columns){
+            //     foreach($tableDiffsRemove as $rowID => $columns){
+            //         var_dump($columns);
+            //         if(count($columns)==count($this->columnsList[$tableName])){//check is it update or delete
+            //             $action = 'delete';
+            //         } else {
+            //             $action = 'update';
+            //         }
+            //         $name = $this->makeClassName($className, $action, $tableName, $rowID);
+            //         $path = $this->makePath($filePath, $action, $tableName, $rowID, $iterator);
+            //         //$output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
+            //         //$this->saveMigrationFile($path, $output);
+            //         // Mark migration as as completed
+            //         if (!empty($this->options['mark_migration'])) {
+            //             $this->markMigration($className, $fileName);
+            //         }
+            //         $iterator++;
+            //     }
+            //     exit;          
+            // }
+
+            // if ($tableDiffsUpdate) {
+            //     foreach($tableDiffsUpdate as $rowID => $columns){
             //         var_dump($columns);
             //         if(count($columns)==count($this->columnsList[$tableName])){//check is it update or delete
             //             $action = 'delete';
