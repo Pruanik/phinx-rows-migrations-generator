@@ -126,33 +126,48 @@ class PhinxMySqlGenerator
             $tableDiffs = $arrayUtil->diff($newSchema['tables'][$tableName] ?? [], $oldSchema['tables'][$tableName] ?? []);
             $tableDiffsRemove = $arrayUtil->diff($oldSchema['tables'][$tableName] ?? [], $newSchema['tables'][$tableName] ?? []);
 
-            //!Need change timestamp
+            $iterator = 1;
     
             if ($tableDiffs) {
                 $action = 'insert';
                 foreach($tableDiffs as $rowID => $columns){
-                    $name = $this->makeName($className, $action, $tableName, $rowID);
-                    $path = $this->makePath($filePath, $action, $tableName, $rowID);
+                    $name = $this->makeClassName($className, $action, $tableName, $rowID);
+                    $fileName = $this->makeFileName($className, $action, $tableName, $rowID, $iterator);
+                    $path = $this->makePath($filePath, $fileName);
+                    var_dump($name);
+                    var_dump($fileName);
+                    var_dump($path);
+                    
                     $output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
                     $this->saveMigrationFile($path, $output);
+                    // Mark migration as as completed
+                    if (!empty($this->options['mark_migration'])) {
+                        $this->markMigration($className, $fileName);
+                    }
+                    $iterator++;
                 }
             }
 
-            if ($tableDiffsRemove) {
-                foreach($tableDiffs as $rowID => $columns){
-                    var_dump($columns);
-                    if(count($columns)==count($this->columnsList[$tableName])){//check is it update or delete
-                        $action = 'delete';
-                    } else {
-                        $action = 'update';
-                    }
-                    $name = $this->makeName($className, $action, $tableName, $rowID);
-                    $path = $this->makePath($filePath, $action, $tableName, $rowID);
-                    $output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
-                    $this->saveMigrationFile($path, $output);
-                }
-                exit;          
-            }
+            // if ($tableDiffsRemove) {
+            //     foreach($tableDiffs as $rowID => $columns){
+            //         var_dump($columns);
+            //         if(count($columns)==count($this->columnsList[$tableName])){//check is it update or delete
+            //             $action = 'delete';
+            //         } else {
+            //             $action = 'update';
+            //         }
+            //         $name = $this->makeClassName($className, $action, $tableName, $rowID);
+            //         $path = $this->makePath($filePath, $action, $tableName, $rowID, $iterator);
+            //         //$output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
+            //         //$this->saveMigrationFile($path, $output);
+            //         // Mark migration as as completed
+            //         if (!empty($this->options['mark_migration'])) {
+            //             $this->markMigration($className, $fileName);
+            //         }
+            //         $iterator++;
+            //     }
+            //     exit;          
+            // }
         }
 
         return 1;
@@ -204,6 +219,10 @@ class PhinxMySqlGenerator
         switch ($action) {
             case 'insert':
                 $output = $this->getInsertInstruction($output, $tableName, $rowID, $columns);
+                break;
+
+            case 'update':
+                //$output = $this->getUpdateInstruction($output, $new, $old);
                 break;
 
             case 'delete':
@@ -291,6 +310,33 @@ class PhinxMySqlGenerator
     }
 
     /**
+     * Get table migration (update data).
+     *
+     * @param array $output
+     * @param string $tableName
+     * @param array $id_new
+     * @param array $diff
+     *
+     * @return array
+     */
+    protected function getUpdateInstructions(array $output, string $tableName, array $id_new, array $diff): array
+    {
+        if (empty($diff)||empty($tableName)) {
+            return $output;
+        }
+
+        $field_id = $this->getFieldId($id_new, $tableName);
+
+        foreach($diff as $id => $rows){
+            $output[] = sprintf('%s$builder', $this->ind2);
+            $output[] = sprintf('%s->update("'.$tableName.'")', $this->ind3);
+            $output[] = sprintf('%s->where(["'.$field_id.'" => "'.$id.'"])', $this->ind3);
+            $output[] = sprintf('%s->execute();', $this->ind3);
+        }
+        return $output;
+    }
+
+    /**
      * Save migration file.
      *
      * @param string $filePath Name of migration file
@@ -302,7 +348,7 @@ class PhinxMySqlGenerator
         file_put_contents($filePath, $migration);
     }
 
-    protected function makeName($className, $action, $tableName, $rowID){
+    protected function makeClassName($className, $action, $tableName, $rowID){
         $name = '';
         $name .= $className;
         $name .= ucfirst($action);
@@ -311,13 +357,72 @@ class PhinxMySqlGenerator
         return $name;
     }
 
-    protected function makePath($filePath, $action, $tableName, $rowID){
-        $path = '';
-        $path .= mb_substr($filePath , 0, -4);
-        $path .= '_'.lcfirst($action);
-        $path .= '_'.lcfirst($tableName);
-        $path .= '_'.$rowID;
-        $path .= '.php';
-        return $path;
+    protected function makeFileName($className, $action, $tableName, $rowID, $iterator){
+        $arr = preg_split('/(?=[A-Z])/', $className);
+        unset($arr[0]); // remove the first element ('')
+        $fileName = date('YmdHis') . $iterator .  '_' . 
+                    strtolower(implode($arr, '_')) . '_' . 
+                    lcfirst($action) . '_' . 
+                    lcfirst($tableName). '_' . 
+                    lcfirst($rowID). '.php';
+        return $fileName;
+    }
+
+    protected function makePath($filePath, $fileName){
+        $filePath = $filePath . DIRECTORY_SEPARATOR . $fileName;
+
+        if (is_file($filePath)) {
+            throw new InvalidArgumentException(sprintf(
+                'The file "%s" already exists',
+                $filePath
+            ));
+        }
+
+        return $filePath;
+    }
+
+    /**
+     * Mark migration as completed.
+     *
+     * @param string $migrationName migrationName
+     * @param string $fileName fileName
+     */
+    protected function markMigration(string $migrationName, string $fileName): void
+    {
+        $this->output->writeln('Mark migration');
+
+        /* @var $adapter AdapterInterface */
+        $adapter = $this->options['adapter'];
+
+        $schemaTableName = $this->options['default_migration_table'];
+
+        /* @var $pdo \PDO */
+        $pdo = $this->options['adapter'];
+
+        // Get version from filename prefix
+        $version = explode('_', $fileName)[0];
+
+        // Record it in the database
+        $time = time();
+        $startTime = date('Y-m-d H:i:s', $time);
+        $endTime = date('Y-m-d H:i:s', $time);
+        $breakpoint = 0;
+
+        $sql = sprintf(
+            "INSERT INTO %s (%s, %s, %s, %s, %s) VALUES ('%s', '%s', '%s', '%s', %s);",
+            $schemaTableName,
+            $adapter->quoteColumnName('version'),
+            $adapter->quoteColumnName('migration_name'),
+            $adapter->quoteColumnName('start_time'),
+            $adapter->quoteColumnName('end_time'),
+            $adapter->quoteColumnName('breakpoint'),
+            $version,
+            substr($migrationName, 0, 100),
+            $startTime,
+            $endTime,
+            $breakpoint
+        );
+
+        $pdo->query($sql);
     }
 }

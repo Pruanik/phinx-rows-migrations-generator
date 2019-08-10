@@ -164,25 +164,9 @@ class MigrationGenerator
                 'The migration class name "%s" already exists',
                 $className
             ));
-        }
+        }        
 
-        // Compute the file path
-        $fileName = Util::mapClassNameToFileName($className);
-        $filePath = $path . DIRECTORY_SEPARATOR . $fileName;
-
-        if (is_file($filePath)) {
-            throw new InvalidArgumentException(sprintf(
-                'The file "%s" already exists',
-                $filePath
-            ));
-        }
-
-        $this->generator->createMigration($filePath, $className, $schema, $oldSchema);
-
-        // Mark migration as as completed
-        if (!empty($this->settings['mark_migration'])) {
-            $this->markMigration($className, $fileName);
-        }
+        $this->generator->createMigration($path, $className, $schema, $oldSchema);
 
         // Overwrite schema file
         // http://symfony.com/blog/new-in-symfony-2-8-console-style-guide
@@ -309,51 +293,6 @@ class MigrationGenerator
         $result = str_replace('_', ' ', $name);
 
         return str_replace(' ', '', ucwords($result));
-    }
-
-    /**
-     * Mark migration as completed.
-     *
-     * @param string $migrationName migrationName
-     * @param string $fileName fileName
-     */
-    protected function markMigration(string $migrationName, string $fileName): void
-    {
-        $this->output->writeln('Mark migration');
-
-        /* @var $adapter AdapterInterface */
-        $adapter = $this->settings['adapter'];
-
-        $schemaTableName = $this->settings['default_migration_table'];
-
-        /* @var $pdo \PDO */
-        $pdo = $this->settings['adapter'];
-
-        // Get version from filename prefix
-        $version = explode('_', $fileName)[0];
-
-        // Record it in the database
-        $time = time();
-        $startTime = date('Y-m-d H:i:s', $time);
-        $endTime = date('Y-m-d H:i:s', $time);
-        $breakpoint = 0;
-
-        $sql = sprintf(
-            "INSERT INTO %s (%s, %s, %s, %s, %s) VALUES ('%s', '%s', '%s', '%s', %s);",
-            $schemaTableName,
-            $adapter->quoteColumnName('version'),
-            $adapter->quoteColumnName('migration_name'),
-            $adapter->quoteColumnName('start_time'),
-            $adapter->quoteColumnName('end_time'),
-            $adapter->quoteColumnName('breakpoint'),
-            $version,
-            substr($migrationName, 0, 100),
-            $startTime,
-            $endTime,
-            $breakpoint
-        );
-
-        $pdo->query($sql);
     }
 
     /**
