@@ -117,6 +117,8 @@ class PhinxMySqlGenerator
         $this->idList = $newSchema['id'];
         $this->columnsList = $newSchema['columns'];
 
+        $iterator = 1;
+
         foreach ($newSchema['tables'] ?? [] as $tableName => $table) {
 
             if ($tableName === $this->options['default_migration_table']) {
@@ -145,8 +147,6 @@ class PhinxMySqlGenerator
                     $tableDiffsRemove = array_diff_key($tableDiffsRemove, array_flip($same_rows));
                 }
             }
-
-            $iterator = 1;
     
             if ($tableDiffs) {
                 $action = 'insert';
@@ -154,12 +154,10 @@ class PhinxMySqlGenerator
                     $name = $this->makeClassName($className, $action, $tableName, $rowID);
                     $fileName = $this->makeFileName($className, $action, $tableName, $rowID, $iterator);
                     $path = $this->makePath($filePath, $fileName);
-                    var_dump($name);
-                    var_dump($fileName);
-                    var_dump($path);
                     
                     $output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
                     $this->saveMigrationFile($path, $output);
+
                     // Mark migration as as completed
                     if (!empty($this->options['mark_migration'])) {
                         $this->markMigration($className, $fileName);
@@ -168,47 +166,41 @@ class PhinxMySqlGenerator
                 }
             }
 
-            // if ($tableDiffsRemove) {
-            //     foreach($tableDiffsRemove as $rowID => $columns){
-            //         var_dump($columns);
-            //         if(count($columns)==count($this->columnsList[$tableName])){//check is it update or delete
-            //             $action = 'delete';
-            //         } else {
-            //             $action = 'update';
-            //         }
-            //         $name = $this->makeClassName($className, $action, $tableName, $rowID);
-            //         $path = $this->makePath($filePath, $action, $tableName, $rowID, $iterator);
-            //         //$output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
-            //         //$this->saveMigrationFile($path, $output);
-            //         // Mark migration as as completed
-            //         if (!empty($this->options['mark_migration'])) {
-            //             $this->markMigration($className, $fileName);
-            //         }
-            //         $iterator++;
-            //     }
-            //     exit;          
-            // }
+            if ($tableDiffsRemove) {
+                $action = 'delete';
+                foreach($tableDiffsRemove as $rowID => $columns){
+                    $name = $this->makeClassName($className, $action, $tableName, $rowID);
+                    $fileName = $this->makeFileName($className, $action, $tableName, $rowID, $iterator);
+                    $path = $this->makePath($filePath, $fileName);
+                    
+                    $output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
+                    $this->saveMigrationFile($path, $output);
 
-            // if ($tableDiffsUpdate) {
-            //     foreach($tableDiffsUpdate as $rowID => $columns){
-            //         var_dump($columns);
-            //         if(count($columns)==count($this->columnsList[$tableName])){//check is it update or delete
-            //             $action = 'delete';
-            //         } else {
-            //             $action = 'update';
-            //         }
-            //         $name = $this->makeClassName($className, $action, $tableName, $rowID);
-            //         $path = $this->makePath($filePath, $action, $tableName, $rowID, $iterator);
-            //         //$output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
-            //         //$this->saveMigrationFile($path, $output);
-            //         // Mark migration as as completed
-            //         if (!empty($this->options['mark_migration'])) {
-            //             $this->markMigration($className, $fileName);
-            //         }
-            //         $iterator++;
-            //     }
-            //     exit;          
-            // }
+                    // Mark migration as as completed
+                    if (!empty($this->options['mark_migration'])) {
+                        $this->markMigration($className, $fileName);
+                    }
+                    $iterator++;
+                }
+            }
+
+            if ($tableDiffsUpdate) {
+                $action = 'update';
+                foreach($tableDiffsUpdate as $rowID => $columns){
+                    $name = $this->makeClassName($className, $action, $tableName, $rowID);
+                    $fileName = $this->makeFileName($className, $action, $tableName, $rowID, $iterator);
+                    $path = $this->makePath($filePath, $fileName);
+                    
+                    $output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
+                    $this->saveMigrationFile($path, $output);
+
+                    // Mark migration as as completed
+                    if (!empty($this->options['mark_migration'])) {
+                        $this->markMigration($className, $fileName);
+                    }
+                    $iterator++;
+                }
+            }
         }
 
         return 1;
@@ -262,12 +254,12 @@ class PhinxMySqlGenerator
                 $output = $this->getInsertInstruction($output, $tableName, $rowID, $columns);
                 break;
 
-            case 'update':
-                //$output = $this->getUpdateInstruction($output, $new, $old);
+            case 'delete':
+                $output = $this->getDeleteInstruction($output, $tableName, $rowID);
                 break;
 
-            case 'delete':
-                //$output = $this->getDeleteInstruction($output, $new, $old);
+            case 'update':
+                $output = $this->getUpdateInstruction($output, $tableName, $rowID, $columns);
                 break;
         }
         
@@ -333,20 +325,19 @@ class PhinxMySqlGenerator
      *
      * @return array
      */
-    protected function getDeleteInstructions(array $output, string $tableName, array $id_new, array $diff): array
+    protected function getDeleteInstruction(array $output, string $tableName, int $rowID): array
     {
-        if (empty($diff)||empty($tableName)) {
+        if (empty($rowID)||empty($tableName)) {
             return $output;
         }
 
-        $field_id = $this->getFieldId($id_new, $tableName);
+        $field_id = $this->idList[$tableName];
 
-        foreach($diff as $id => $rows){
-            $output[] = sprintf('%s$builder', $this->ind2);
-            $output[] = sprintf('%s->delete("'.$tableName.'")', $this->ind3);
-            $output[] = sprintf('%s->where(["'.$field_id.'" => "'.$id.'"])', $this->ind3);
-            $output[] = sprintf('%s->execute();', $this->ind3);
-        }
+        $output[] = sprintf('%s$builder', $this->ind2);
+        $output[] = sprintf('%s->delete("'.$tableName.'")', $this->ind3);
+        $output[] = sprintf('%s->where(["'.$field_id.'" => "'.$rowID.'"])', $this->ind3);
+        $output[] = sprintf('%s->execute();', $this->ind3);
+
         return $output;
     }
 
@@ -360,20 +351,22 @@ class PhinxMySqlGenerator
      *
      * @return array
      */
-    protected function getUpdateInstructions(array $output, string $tableName, array $id_new, array $diff): array
+    protected function getUpdateInstruction(array $output, string $tableName, int $rowID, array $columns): array
     {
-        if (empty($diff)||empty($tableName)) {
+        if (empty($columns)||empty($tableName)) {
             return $output;
         }
 
-        $field_id = $this->getFieldId($id_new, $tableName);
+        $field_id = $this->idList[$tableName];
 
-        foreach($diff as $id => $rows){
-            $output[] = sprintf('%s$builder', $this->ind2);
-            $output[] = sprintf('%s->update("'.$tableName.'")', $this->ind3);
-            $output[] = sprintf('%s->where(["'.$field_id.'" => "'.$id.'"])', $this->ind3);
-            $output[] = sprintf('%s->execute();', $this->ind3);
+        $output[] = sprintf('%s$builder', $this->ind2);
+        $output[] = sprintf('%s->update("'.$tableName.'")', $this->ind3);
+        foreach($columns['future'] as $key => $value){
+            $output[] = sprintf('%s->set("'.$key.'", "'.$value.'")', $this->ind3);
         }
+        $output[] = sprintf('%s->where(["'.$field_id.'" => "'.$rowID.'"])', $this->ind3);
+        $output[] = sprintf('%s->execute();', $this->ind3);
+
         return $output;
     }
 
