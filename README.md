@@ -1,37 +1,20 @@
-# Phinx migrations generator
+# Phinx migrations generator for data in tables
 
 Generate a migration by comparing your current database to your mapping information.
 
-[![Latest Version on Packagist](https://img.shields.io/github/release/odan/phinx-migrations-generator.svg)](https://packagist.org/packages/odan/phinx-migrations-generator)
-[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE.md)
-[![Build Status](https://travis-ci.org/odan/phinx-migrations-generator.svg?branch=master)](https://travis-ci.org/odan/phinx-migrations-generator)
-[![Code Coverage](https://scrutinizer-ci.com/g/odan/phinx-migrations-generator/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/odan/phinx-migrations-generator/?branch=master)
-[![Quality Score](https://scrutinizer-ci.com/g/odan/phinx-migrations-generator/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/odan/phinx-migrations-generator/?branch=master)
-[![Total Downloads](https://img.shields.io/packagist/dt/odan/phinx-migrations-generator.svg)](https://packagist.org/packages/odan/phinx-migrations-generator/stats)
-
+This fork of the main project ([Phinx-Migrations-Generator](https://github.com/odan/phinx-migrations-generator)) synchronizes the data in the given project tables. This could be useful for transferring data from system tables or settings stored in the database.
 
 [Phinx](https://phinx.org/) cannot automatically generate migrations.
 Phinx creates "only" a class with empty `up`, `down` or `change` functions. You still have to write the migration manually.
 
 In reality, you should rarely have to write migrations manually because the migration library should automatically generate migration classes by comparing your schema mapping information (i.e. how your database should look like) with your current database structure.
 
-## Features
-
-* Framework independent
-* DBMS: MySQL 5.7+ (only)
-* Initial schema and schema diff
-* Database: character set, collation
-* Tables: create, update, remove, engine, comment, character set, collation
-* Columns: create, update, remove
-* Indexes: create, remove
-* Foreign keys: create, remove, constraint name
-
 ## Install
 
 Via Composer
 
 ```
-$ composer require odan/phinx-migrations-generator --dev
+$ composer require pruanik/phinx-rows-migrations-generator --dev
 ```
 
 ## Usage
@@ -43,7 +26,7 @@ The `schema.php` file contains the previous database schema and is getting compa
 Based on the difference, a Phinx migration class is generated.
 
 ```
-$ vendor/bin/phinx-migrations generate
+$ vendor/bin/phinx-migrations generate --overwrite
 ```
 
 By executing the `generate` command again, only the difference to the last schema is generated.
@@ -77,52 +60,7 @@ foreign_keys | bool | false | Enable or disable foreign key migrations.
 
 ### Example configuration
 
-Filename: `phinx.php` (in your project root directory)
-
-```php
-<?php
-
-// Framework bootstrap code here
-require_once __DIR__ . '/config/bootstrap.php';
-
-// Get PDO object
-$pdo = new PDO(
-    'mysql:host=127.0.0.1;dbname=test;charset=utf8', 'root', '',
-    array(
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_PERSISTENT => false,
-        PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8 COLLATE utf8_unicode_ci',
-    )
-);
-
-// Get migration path for phinx classes
-$migrationPath = __DIR__ . '/resources/migrations';
-
-return [
-    'paths' => [
-        'migrations' => $migrationPath,
-    ],
-    'foreign_keys' => false,
-    'environments' => [
-        'default_database' => 'local',
-        'local' => [
-            // Database name
-            'name' => $pdo->query('select database()')->fetchColumn(),
-            'connection' => $pdo,
-        ]
-    ]
-];
-```
-
-## Testing
-
-```bash
-$ composer test
-```
-
-## Contributing
-
-Please see [CONTRIBUTING](CONTRIBUTING.md) and [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md) for details.
+You can find example config in repo: tests/phinx.php.example
 
 ## License
 

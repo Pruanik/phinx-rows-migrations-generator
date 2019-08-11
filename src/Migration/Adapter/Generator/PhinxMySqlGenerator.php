@@ -207,15 +207,17 @@ class PhinxMySqlGenerator
     }
 
     /**
-     * Generate code for change function.
+     * Generate code
      *
-     * @param string[] $output Output
-     * @param array $new New schema
-     * @param array $old Old schema
+     * @param string $action Action
+     * @param string $className name of class
+     * @param string $tableName name of table
+     * @param int $rowID primary key
+     * @param array $columns
      *
      * @return string[] Output
      */
-    protected function makeClass($action, $className, $tableName, $rowID, $columns): string
+    protected function makeClass(string $action, string $className, string $tableName, int $rowID, array $columns): string
     {
         $output = [];
         $output[] = '<?php';
@@ -235,11 +237,13 @@ class PhinxMySqlGenerator
     }
 
     /**
-     * Generate code for change function.
+     * Add method to class
      *
      * @param string[] $output Output
-     * @param array $new New schema
-     * @param array $old Old schema
+     * @param string $action Action
+     * @param string $tableName name of table
+     * @param int $rowID primary key
+     * @param array $columns
      *
      * @return string[] Output
      */
@@ -279,13 +283,12 @@ class PhinxMySqlGenerator
     }
 
     /**
-     * Get table migration (insert data).
+     * Get insert functions.
      *
      * @param array $output
      * @param string $tableName
-     * @param array $id_new
-     * @param array $columns_new
-     * @param array $diff
+     * @param int $rowID
+     * @param array $columns
      *
      * @return array
      */
@@ -316,12 +319,11 @@ class PhinxMySqlGenerator
     }
 
     /**
-     * Get table migration (delete data).
+     * Get delete functions.
      *
      * @param array $output
      * @param string $tableName
-     * @param array $id_new
-     * @param array $diff
+     * @param int $rowID
      *
      * @return array
      */
@@ -342,12 +344,12 @@ class PhinxMySqlGenerator
     }
 
     /**
-     * Get table migration (update data).
+     * Get update functions.
      *
      * @param array $output
      * @param string $tableName
-     * @param array $id_new
-     * @param array $diff
+     * @param int $rowID
+     * @param array $columns
      *
      * @return array
      */
