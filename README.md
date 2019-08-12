@@ -26,7 +26,7 @@ The `schema.php` file contains the previous database schema and is getting compa
 Based on the difference, a Phinx migration class is generated.
 
 ```
-$ vendor/bin/phinx-migrations generate --overwrite
+$ vendor/bin/phinx-rows-migrations generate --overwrite
 ```
 
 By executing the `generate` command again, only the difference to the last schema is generated.
