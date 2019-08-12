@@ -152,7 +152,7 @@ class PhinxMySqlGenerator
                 $action = 'insert';
                 foreach($tableDiffs as $rowID => $columns){
                     $name = $this->makeClassName($className, $action, $tableName, $rowID);
-                    $fileName = $this->makeFileName($className, $action, $tableName, $rowID, $iterator);
+                    $fileName = $this->makeFileName($name, $action, $tableName, $rowID, $iterator);
                     $path = $this->makePath($filePath, $fileName);
                     
                     $output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
@@ -170,7 +170,7 @@ class PhinxMySqlGenerator
                 $action = 'delete';
                 foreach($tableDiffsRemove as $rowID => $columns){
                     $name = $this->makeClassName($className, $action, $tableName, $rowID);
-                    $fileName = $this->makeFileName($className, $action, $tableName, $rowID, $iterator);
+                    $fileName = $this->makeFileName($name, $action, $tableName, $rowID, $iterator);
                     $path = $this->makePath($filePath, $fileName);
                     
                     $output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
@@ -188,7 +188,7 @@ class PhinxMySqlGenerator
                 $action = 'update';
                 foreach($tableDiffsUpdate as $rowID => $columns){
                     $name = $this->makeClassName($className, $action, $tableName, $rowID);
-                    $fileName = $this->makeFileName($className, $action, $tableName, $rowID, $iterator);
+                    $fileName = $this->makeFileName($name, $action, $tableName, $rowID, $iterator);
                     $path = $this->makePath($filePath, $fileName);
                     
                     $output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
@@ -388,7 +388,14 @@ class PhinxMySqlGenerator
         $name = '';
         $name .= $className;
         $name .= ucfirst($action);
-        $name .= ucfirst($tableName);
+
+        $tableName = preg_replace('/[^a-zA-Z0-9\_]/ui', '',$tableName);
+        $tableName = mb_strtolower($tableName);
+        $tableName = explode('_', $tableName);
+        $tableName = array_map('ucfirst', $tableName);
+        $tableName = implode('',$tableName);
+
+        $name .= $tableName;
         $name .= $rowID;
         return $name;
     }
