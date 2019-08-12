@@ -147,10 +147,10 @@ class PhinxMySqlGenerator
                     $tableDiffsRemove = array_diff_key($tableDiffsRemove, array_flip($same_rows));
                 }
             }
-    
-            if ($tableDiffs) {
-                $action = 'insert';
-                foreach($tableDiffs as $rowID => $columns){
+
+            if ($tableDiffsRemove) {
+                $action = 'delete';
+                foreach($tableDiffsRemove as $rowID => $columns){
                     $name = $this->makeClassName($className, $action, $tableName, $rowID);
                     $fileName = $this->makeFileName($name, $iterator);
                     $path = $this->makePath($filePath, $fileName);
@@ -165,10 +165,10 @@ class PhinxMySqlGenerator
                     $iterator++;
                 }
             }
-
-            if ($tableDiffsRemove) {
-                $action = 'delete';
-                foreach($tableDiffsRemove as $rowID => $columns){
+    
+            if ($tableDiffs) {
+                $action = 'insert';
+                foreach($tableDiffs as $rowID => $columns){
                     $name = $this->makeClassName($className, $action, $tableName, $rowID);
                     $fileName = $this->makeFileName($name, $iterator);
                     $path = $this->makePath($filePath, $fileName);
