@@ -152,7 +152,7 @@ class PhinxMySqlGenerator
                 $action = 'insert';
                 foreach($tableDiffs as $rowID => $columns){
                     $name = $this->makeClassName($className, $action, $tableName, $rowID);
-                    $fileName = $this->makeFileName($name, $action, $tableName, $rowID, $iterator);
+                    $fileName = $this->makeFileName($name, $iterator);
                     $path = $this->makePath($filePath, $fileName);
                     
                     $output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
@@ -170,7 +170,7 @@ class PhinxMySqlGenerator
                 $action = 'delete';
                 foreach($tableDiffsRemove as $rowID => $columns){
                     $name = $this->makeClassName($className, $action, $tableName, $rowID);
-                    $fileName = $this->makeFileName($name, $action, $tableName, $rowID, $iterator);
+                    $fileName = $this->makeFileName($name, $iterator);
                     $path = $this->makePath($filePath, $fileName);
                     
                     $output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
@@ -188,7 +188,7 @@ class PhinxMySqlGenerator
                 $action = 'update';
                 foreach($tableDiffsUpdate as $rowID => $columns){
                     $name = $this->makeClassName($className, $action, $tableName, $rowID);
-                    $fileName = $this->makeFileName($name, $action, $tableName, $rowID, $iterator);
+                    $fileName = $this->makeFileName($name, $iterator);
                     $path = $this->makePath($filePath, $fileName);
                     
                     $output = $this->makeClass($action, $name, $tableName, $rowID, $columns);
@@ -400,14 +400,11 @@ class PhinxMySqlGenerator
         return $name;
     }
 
-    protected function makeFileName($className, $action, $tableName, $rowID, $iterator){
+    protected function makeFileName($className, $iterator){
         $arr = preg_split('/(?=[A-Z])/', $className);
         unset($arr[0]); // remove the first element ('')
         $fileName = date('YmdHis') . $iterator .  '_' . 
-                    strtolower(implode($arr, '_')) . '_' . 
-                    lcfirst($action) . '_' . 
-                    lcfirst($tableName). '_' . 
-                    lcfirst($rowID). '.php';
+                    strtolower(implode($arr, '_')) . '.php';
         return $fileName;
     }
 
