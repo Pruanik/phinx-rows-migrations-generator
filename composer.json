@@ -48,6 +48,6 @@
         }
     },
     "bin": [
-        "./bin/phinx-migrations"
+        "./bin/phinx-rows-migrations"
     ]
 }
